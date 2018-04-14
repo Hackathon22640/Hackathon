@@ -1,63 +1,134 @@
-let container;
-let camera, scene, renderer;
-let uniforms;
+var canvas = document.getElementById("canvas");
+var ctx = canvas.getContext("2d");
+var cw = canvas.width = window.innerWidth,
+  cx = cw / 2;
+var ch = canvas.height = window.innerHeight,
+  cy = ch / 2;
+ctx.strokeStyle = "#fff";
 
-function init() {
-  container = document.getElementById( 'container' );
+var requestId = null;
+var rad = Math.PI / 180;
 
-  camera = new THREE.Camera();
-  camera.position.z = 1;
+var colors = ["#6A0000", "#900000", "#902B2B", "#A63232", "#A62626", "#FD5039", "#C12F2A", "#FF6540", "#f93801"];
+//var colors = ["#66C2FF", "#48819C", "#205487", "#1DA7D1", "#1FC3FF"];
 
-  scene = new THREE.Scene();
+var spring = 1 / 10;
+var friction = .85;
+var explosions = [];
 
-  var geometry = new THREE.PlaneBufferGeometry( 2, 2 );
-
-  uniforms = {
-    u_time: { type: "f", value: 1.0 },
-    u_resolution: { type: "v2", value: new THREE.Vector2() },
-    u_mouse: { type: "v2", value: new THREE.Vector2() }
+function Particle(o) {
+  this.decay = .95; //randomIntFromInterval(80, 95)/100;//
+  this.r = randomIntFromInterval(10, 70);
+  this.R = 100 - this.r;
+  this.angle = Math.random() * 2 * Math.PI;
+  this.center = o; //{x:cx,y:cy} 
+  this.pos = {};
+  this.pos.x = this.center.x + this.r * Math.cos(this.angle);
+  this.pos.y = this.center.y + this.r * Math.sin(this.angle);
+  this.dest = {};
+  this.dest.x = this.center.x + this.R * Math.cos(this.angle);
+  this.dest.y = this.center.y + this.R * Math.sin(this.angle);
+  this.color = colors[~~(Math.random() * colors.length)];
+  this.vel = {
+    x: 0,
+    y: 0
+  };
+  this.acc = {
+    x: 0,
+    y: 0
   };
 
-  var material = new THREE.ShaderMaterial( {
-    uniforms: uniforms,
-    vertexShader: document.getElementById( 'vertexShader' ).textContent,
-    fragmentShader: document.getElementById( 'fragmentShader' ).textContent
-  } );
+  this.update = function() {
+    var dx = (this.dest.x - this.pos.x);
+    var dy = (this.dest.y - this.pos.y);
 
-  var mesh = new THREE.Mesh( geometry, material );
-  scene.add( mesh );
+    this.acc.x = dx * spring;
+    this.acc.y = dy * spring;
+    this.vel.x += this.acc.x;
+    this.vel.y += this.acc.y;
 
-  renderer = new THREE.WebGLRenderer();
-  renderer.setPixelRatio( window.devicePixelRatio );
+    this.vel.x *= friction;
+    this.vel.y *= friction;
 
-  container.appendChild( renderer.domElement );
+    this.pos.x += this.vel.x;
+    this.pos.y += this.vel.y;
 
-  onWindowResize();
-  window.addEventListener( 'resize', onWindowResize, false );
+    if (this.r > 0) this.r *= this.decay;
+  }
 
-  document.onmousemove = function(e){
-    uniforms.u_mouse.value.x = e.pageX
-    uniforms.u_mouse.value.y = e.pageY
+  this.draw = function() {
+
+    ctx.fillStyle = this.color;
+    ctx.beginPath();
+    ctx.arc(this.pos.x, this.pos.y, this.r, 0, 2 * Math.PI);
+    ctx.fill();
+
+  }
+
+}
+
+function Explosion() {
+
+  this.pos = {
+    x: Math.random() * cw,
+    y: Math.random() * ch
+  };
+  this.particles = [];
+  for (var i = 0; i < 50; i++) {
+    this.particles.push(new Particle(this.pos));
+  }
+
+  this.update = function() {
+    for (var i = 0; i < this.particles.length; i++) {
+      this.particles[i].update();
+      if (this.particles[i].r < .5) {
+        this.particles.splice(i, 1)
+      }
+    }
+
+  }
+
+  this.draw = function() {
+    for (var i = 0; i < this.particles.length; i++) {
+      this.particles[i].draw();
+    }
   }
 }
 
-function onWindowResize( event ) {
-  renderer.setSize( window.innerWidth, window.innerHeight );
-  uniforms.u_resolution.value.x = renderer.domElement.width;
-  uniforms.u_resolution.value.y = renderer.domElement.height;
+function Draw() {
+  requestId = window.requestAnimationFrame(Draw);
+  ctx.clearRect(0, 0, cw, ch);
+  ctx.globalCompositeOperation = "lighter";
+  if (Math.random() < .1) {
+    explosions.push(new Explosion());
+  }
+
+  for (var j = 0; j < explosions.length; j++) {
+
+    explosions[j].update();
+    explosions[j].draw();
+
+  }
+
+}
+var Init = function() {
+  if (requestId) {
+    window.cancelAnimationFrame(requestId);
+    requestId = null;
+  }
+  cw = canvas.width = window.innerWidth,
+    cx = cw / 2;
+  ch = canvas.height = window.innerHeight,
+    cy = ch / 2;
+
+  Draw();
 }
 
-function animate() {
-  requestAnimationFrame( animate );
-  render();
+window.setTimeout(function() {
+  Init();
+  window.addEventListener('resize', Init, false);
+}, 15);
+
+function randomIntFromInterval(mn, mx) {
+  return Math.floor(Math.random() * (mx - mn + 1) + mn);
 }
-
-function render() {
-  uniforms.u_time.value += 0.05;
-  renderer.render( scene, camera );
-}
-
-
-
-init();
-animate();

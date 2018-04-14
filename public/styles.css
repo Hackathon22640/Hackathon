@@ -5,5 +5,13 @@ body {
 h1 {
     color: navy;
     margin-left: 20px;
-    
+    font-family: "Comic Sans MS", "Comic Sans", cursive;
+}
+
+h2 {
+    font-family: "Comic Sans MS", "Comic Sans", cursive;
+}
+
+h3 {
+    font-family: "Comic Sans MS", "Comic Sans", cursive;
 }

@@ -18,27 +18,3 @@ h3 {
 small {
     font-family "Impact", "Charcoal", sans-serif;
 }
- body {
-  margin: 0;
-  padding: 0;
-}
-
-#container {
-  position: fixed;
-  
-}
-p {
-    color: #1DB3FE;
-}
-body {
-  overflow: hidden;
-  background-image: radial-gradient(farthest-side ellipse at right bottom , #900, black);
-  /*background-image: radial-gradient(farthest-side ellipse at right bottom , #114255, black);*/
-}
-canvas {
-  
-  margin: 0;
-  /*-webkit-filter: blur( 5px ) contrast( 5 );
-    -moz-filter: blur( 5px ) contrast( 5 );
-    filter: blur( 5px ) contrast( 5 );*/
-}
